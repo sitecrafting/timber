@@ -2,11 +2,33 @@
 
 	class TestTimberPost extends Timber_UnitTestCase {
 
-		function testPostObject(){
+		function testConstructor(){
 			$post_id = $this->factory->post->create();
 			$post = new Timber\Post($post_id);
 			$this->assertEquals('Timber\Post', get_class($post));
 			$this->assertEquals($post_id, $post->ID);
+		}
+
+		function testConstructorWithNonExistentPostId() {
+			$post = new Timber\Post(999999);
+			$this->assertEquals('Timber\Post', get_class($post));
+
+			// sanity check
+			$this->assertNull($post->ID);
+			$this->assertNull($post->post_author);
+			$this->assertNull($post->post_content);
+			$this->assertNull($post->post_date);
+			$this->assertNull($post->post_status);
+			$this->assertNull($post->post_excerpt);
+			$this->assertNull($post->post_parent);
+			$this->assertNull($post->post_title);
+			$this->assertNull($post->post_type);
+			$this->assertNull($post->slug);
+
+			// assert aliased properties are null
+			$this->assertNull($post->status);
+			$this->assertNull($post->id);
+			$this->assertNull($post->custom);
 		}
 
 		function testPostPasswordReqd(){

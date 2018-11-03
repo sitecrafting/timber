@@ -381,17 +381,15 @@ class Post extends Core implements CoreInterface {
 	 * or object to return a WordPress post object from WP's built-in get_post() function
 	 * @internal
 	 * @param integer $pid
-	 * @return WP_Post on success
+	 * @return WP_Post|null a WP_Post object on success, null on failure
 	 */
 	protected function prepare_post_info( $pid = 0 ) {
 		if ( is_string($pid) || is_numeric($pid) || (is_object($pid) && !isset($pid->post_title)) || $pid === 0 ) {
 			$pid  = self::check_post_id($pid);
 			$post = get_post($pid);
-			if ( $post ) {
-				return $post;
-			}
+			return $post;
 		}
-		// we can skip if already is WP_Post.
+		// assume $pid is already a WP_Post instance.
 		return $pid;
 	}
 
@@ -594,18 +592,21 @@ class Post extends Core implements CoreInterface {
 	 */
 	protected function get_info( $pid = null ) {
 		$post = $this->prepare_post_info($pid);
-		if ( !isset($post->post_status) ) {
+		if ( !isset($post) || !isset($post->post_status) ) {
+			// This post doesn't exist. Nullify aliased properties.
+			$this->ID     = null;
+			$this->status = null;
+			$this->custom = null;
 			return null;
 		}
 
 		do_action_ref_array('the_post', array(&$post, &$GLOBALS['wp_query']));
 
 		$post->status = $post->post_status;
-		$post->id = $post->ID;
-		$post->slug = $post->post_name;
-		$customs = $this->get_meta_values($post->ID);
+		$post->id     = $post->ID;
+		$post->slug   = $post->post_name;
+		$customs      = $this->get_meta_values($post->ID);
 		$post->custom = $customs;
-		//$post = (object) array_merge((array) $customs, (array) $post);
 		return $post;
 	}
 
